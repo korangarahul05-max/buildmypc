@@ -101,8 +101,7 @@ Required JSON Structure:
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      throw new Error("Gemini 3.8 Error: " + response.status + " " + errText);
+      throw new Error("AI provider returned an error");
     }
 
     const data = await response.json();
