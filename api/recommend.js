@@ -85,61 +85,10 @@ Required JSON Structure:
 `;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
-    
-    // Using native fetch available in Node.js 18+ (Vercel default)
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-            temperature: 0.2,
-            responseMimeType: "application/json"
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error("Gemini Error: " + response.status + " " + errText);
-    }
-
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
     const data = await response.json();
-    const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!textResult) {
-      throw new Error("Empty response from AI");
-    }
-
-    let buildData;
-    try {
-      // In case the model still includes markdown despite instructions and mimeType
-      const cleanedText = textResult.replace(/^\s*```(?:json)?/i, '').replace(/```\s*$/i, '').trim();
-      buildData = JSON.parse(cleanedText);
-    } catch (parseError) {
-      throw new Error("AI returned invalid JSON");
-    }
-
-    // Validate expected structure
-    if (
-      !buildData ||
-      !Array.isArray(buildData.components) ||
-      !Array.isArray(buildData.compatibility) ||
-      !Array.isArray(buildData.os) ||
-      !buildData.bottleneck ||
-      typeof buildData.bottleneck !== 'object' ||
-      !Array.isArray(buildData.performance_tiers) ||
-      !Array.isArray(buildData.edu_cards)
-    ) {
-      throw new Error("AI returned invalid build data");
-    }
-
-    return res.status(200).json(buildData);
-
-  } catch (error) {
-    // Only return generic or specific human readable errors, hide stack traces and keys
-    const message = error.message || "Failed to generate build";
-    return res.status(500).json({ error: message });
+    return res.status(200).json(data);
+  } catch(e) {
+    return res.status(500).json({ error: e.message });
   }
 };
