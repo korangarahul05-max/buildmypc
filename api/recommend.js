@@ -1,4 +1,4 @@
-const MODEL_NAME = "gemini-1.5-flash";
+const MODEL_NAME = "gemini-1.5-flash-latest";
 const SUPPORTED_USE_CASES = ["Gaming", "Video Editing", "Programming", "Office Work"];
 
 module.exports = async function handler(req, res) {
