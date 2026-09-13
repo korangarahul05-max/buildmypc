@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
     const payload = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const promptText = payload.prompt || payload.requirements || JSON.stringify(payload);
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
 
     const apiResponse = await fetch(geminiUrl, {
       method: 'POST',
