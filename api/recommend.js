@@ -1,4 +1,4 @@
-const MODEL_NAME = "gemini-pro";
+const MODEL_NAME = "gemini-1.5-flash";
 const SUPPORTED_USE_CASES = ["Gaming", "Video Editing", "Programming", "Office Work"];
 
 module.exports = async function handler(req, res) {
@@ -85,7 +85,7 @@ Required JSON Structure:
 `;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
     
     // Using native fetch available in Node.js 18+ (Vercel default)
     const response = await fetch(url, {
