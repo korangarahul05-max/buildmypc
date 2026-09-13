@@ -1028,7 +1028,16 @@ async function runAI(budget, useCase) {
       try { errData = await resp.json(); } catch(e) {}
       throw new Error(errData.error || ('Server error ' + resp.status));
     }
-    var build = await resp.json();
+    var data = await resp.json();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    let build;
+    try {
+      const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      build = JSON.parse(cleaned);
+    } catch (err) {
+      console.error("JSON parsing error on AI output:", rawText);
+      throw new Error("Failed to parse AI recommendation payload.");
+    }
     skeletonSection.classList.remove('visible');
     renderResults(build, budget, useCase, 'ai');
     lastBuildData = { build: build, budget: budget, useCase: useCase, source: 'ai' };
@@ -1073,6 +1082,8 @@ function renderResults(build, budget, useCase, source) {
   var mainComps = [];
   var advComps = [];
 
+  build.components = Array.isArray(build.components) ? build.components : [];
+  
   build.components.filter(function(c){ return c.price > 0; }).forEach(function(c) {
     if (mainTypes.indexOf(c.type) !== -1) mainComps.push(c);
     else advComps.push(c);
