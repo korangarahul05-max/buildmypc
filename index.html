@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build My PC</title>
+<meta name="description" content="Smart PC hardware recommendations for every Indian budget. Enter your budget and use-case — get a full build with compatibility check, OS suggestion, and performance analysis.">
+<meta property="og:title" content="Build My PC">
+<meta property="og:description" content="Smart PC hardware recommendations for every Indian budget. Gaming, video editing, programming, or office — we build the perfect PC for your rupees.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://budgetarchitect.netlify.app/preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Build My PC">
+<meta name="twitter:description" content="Smart PC hardware recommendations for every Indian budget.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#080c14; --surface:#0f1623; --glass:rgba(255,255,255,0.04);
+    --border:rgba(255,255,255,0.08); --blue:#3b82f6; --blue-dim:#1d4ed8;
+    --orange:#f97316; --orange-dim:#c2410c; --green:#22c55e;
+    --red:#ef4444; --yellow:#eab308; --text:#f1f5f9; --muted:#94a3b8;
+    --mono:'JetBrains Mono',monospace; --sans:'Space Grotesk',sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+  /* HERO */
+  .hero{position:relative;z-index:1;text-align:center;padding:64px 24px 48px;max-width:800px;margin:0 auto}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:999px;padding:6px 16px;font-size:12px;font-family:var(--mono);color:var(--blue);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:24px}
+  .hero-badge span{width:6px;height:6px;background:var(--blue);border-radius:50%;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+  .hero h1{font-size:clamp(36px,6vw,64px);font-weight:800;line-height:1.1;letter-spacing:-0.03em;margin-bottom:16px;background:linear-gradient(180deg,#ffffff 0%,#cbd5e1 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 15px rgba(255,255,255,0.1))}
+  .hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--blue),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero p{font-size:18px;color:#cbd5e1;font-weight:500;max-width:520px;margin:0 auto 8px;line-height:1.6}
+
+  /* OFFLINE BANNER */
+  .offline-banner{display:none;position:relative;z-index:1;max-width:960px;margin:0 auto;padding:0 20px}
+  .offline-banner.visible{display:block}
+  .offline-inner{background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--yellow);margin-bottom:16px}
+
+  /* CONTAINER */
+  .container{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:0 20px 80px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;margin-bottom:20px;backdrop-filter:blur(12px)}
+  .card.animate-in{animation:fadeUp 0.4s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  .section-label{display:flex;align-items:center;gap:10px;font-size:11px;font-family:var(--mono);letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:20px}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+  /* BUDGET */
+  .budget-display{text-align:center;margin-bottom:24px}
+  .budget-value-wrap{display:inline-flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;position:relative}
+  .budget-value{font-size:52px;font-weight:700;font-family:var(--mono);background:linear-gradient(135deg,var(--blue),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+  .budget-edit-btn{font-size:22px;opacity:0.3;transition:opacity 0.2s, transform 0.2s;user-select:none;color:var(--orange)}
+  .budget-value-wrap:hover .budget-edit-btn{opacity:1;transform:scale(1.1)}
+  .budget-edit-input{font-size:52px;font-weight:700;font-family:var(--mono);color:#fff;background:var(--glass);border:1px solid var(--border);border-radius:12px;text-align:center;width:260px;line-height:1;padding:6px 12px;outline:none}
+  .budget-edit-input:focus{border-color:var(--blue);box-shadow:0 0 15px rgba(59,130,246,0.3)}
+  .budget-label{font-size:13px;color:#cbd5e1;font-weight:500;margin-top:4px}
+  .slider-wrap{position:relative;padding:12px 0}
+  input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border);outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#ffffff;border:4px solid var(--blue);box-shadow:0 0 15px rgba(59,130,246,0.6);cursor:grab;transition:transform 0.1s ease, background-color 0.1s ease, border-color 0.1s ease}
+  input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.1);background:var(--blue);border-color:#ffffff;box-shadow:0 0 20px rgba(59,130,246,0.8)}
+  input[type=range]::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.25);background:var(--orange);border-color:#ffffff;box-shadow:0 0 25px rgba(249,115,22,0.8)}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#ffffff;border:4px solid var(--blue);box-shadow:0 0 15px rgba(59,130,246,0.6);cursor:grab;transition:transform 0.1s ease, background-color 0.1s ease, border-color 0.1s ease;box-sizing:border-box}
+  input[type=range]::-moz-range-thumb:hover{transform:scale(1.1);background:var(--blue);border-color:#ffffff;box-shadow:0 0 20px rgba(59,130,246,0.8)}
+  input[type=range]::-moz-range-thumb:active{cursor:grabbing;transform:scale(1.25);background:var(--orange);border-color:#ffffff;box-shadow:0 0 25px rgba(249,115,22,0.8)}
+  .slider-ticks{display:flex;justify-content:space-between;margin-top:14px;font-size:11px;font-family:var(--mono);color:var(--muted)}
+  .slider-ticks span{cursor:pointer;padding:4px 10px;border-radius:8px;background:var(--glass);border:1px solid var(--border);transition:all 0.15s ease;user-select:none}
+  .slider-ticks span:hover{color:var(--text);border-color:var(--blue);background:rgba(59,130,246,0.12);transform:translateY(-1px);box-shadow:0 4px 10px rgba(59,130,246,0.15)}
+  .slider-ticks span:active{transform:translateY(0);box-shadow:none}
+
+  /* USE CASES */
+  .use-cases{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  @media(min-width:600px){.use-cases{grid-template-columns:repeat(4,1fr)}}
+  .use-case-card{
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:24px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    user-select:none;
+    position:relative;
+    overflow:hidden;
+  }
+  .use-case-card:hover{
+    transform:translateY(-5px);
+    background:rgba(255,255,255,0.05);
+    border-color:rgba(255,255,255,0.2);
+    box-shadow:0 10px 25px rgba(0,0,0,0.3);
+  }
+  .use-case-card.active{
+    transform:scale(1.04);
+    border-width:1.5px;
+  }
+  .use-case-card.active.gaming{
+    border-color:var(--orange);
+    background:rgba(249,115,22,0.08);
+    box-shadow:0 0 25px rgba(249,115,22,0.35);
+  }
+  .use-case-card.active.video{
+    border-color:#a855f7;
+    background:rgba(168,85,247,0.08);
+    box-shadow:0 0 25px rgba(168,85,247,0.35);
+  }
+  .use-case-card.active.programming{
+    border-color:var(--green);
+    background:rgba(34,197,94,0.08);
+    box-shadow:0 0 25px rgba(34,197,94,0.35);
+  }
+  .use-case-card.active.office{
+    border-color:var(--blue);
+    background:rgba(59,130,246,0.08);
+    box-shadow:0 0 25px rgba(59,130,246,0.35);
+  }
+  .use-case-icon{
+    font-size:32px;
+    margin-bottom:12px;
+    transition:transform 0.3s ease;
+    display:inline-block;
+  }
+  .use-case-card:hover .use-case-icon{
+    transform:scale(1.15) rotate(5deg);
+  }
+  .use-case-name{
+    font-size:14px;
+    font-weight:700;
+    margin-bottom:6px;
+    letter-spacing:-0.01em;
+  }
+  .use-case-desc{font-size:11px;color:var(--muted);line-height:1.4}
+
+  /* BUILD BTN */
+  .build-btn{width:100%;padding:16px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--blue),var(--blue-dim));color:#fff;font-family:var(--sans);font-size:16px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:0.02em}
+  .build-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(59,130,246,0.3)}
+  .build-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+  /* SKELETON */
+  .skeleton-section{display:none}
+  .skeleton-section.visible{display:block}
+  .skeleton-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;margin-bottom:20px}
+  .skeleton-label{height:12px;width:160px;border-radius:6px;background:var(--border);margin-bottom:24px;animation:shimmer 1.5s infinite}
+  .skeleton-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  .skeleton-item{height:90px;border-radius:12px;background:var(--border);animation:shimmer 1.5s infinite}
+  .skeleton-item:nth-child(2){animation-delay:.1s}
+  .skeleton-item:nth-child(3){animation-delay:.2s}
+  .skeleton-item:nth-child(4){animation-delay:.3s}
+  .skeleton-bar{height:16px;border-radius:8px;background:var(--border);margin-bottom:10px;animation:shimmer 1.5s infinite}
+  .skeleton-bar.w60{width:60%}
+  .skeleton-bar.w80{width:80%}
+  .skeleton-bar.w40{width:40%;animation-delay:.15s}
+  .skeleton-status{display:flex;flex-direction:column;gap:10px}
+  .skeleton-status-item{height:56px;border-radius:10px;background:var(--border);animation:shimmer 1.5s infinite}
+  @keyframes shimmer{0%{background:var(--border)}50%{background:rgba(255,255,255,0.1)}100%{background:var(--border)}}
+
+  /* ERROR */
+  .error-state{display:none;text-align:center;padding:40px 24px;background:var(--surface);border:1px solid rgba(239,68,68,0.2);border-radius:20px;margin-bottom:20px}
+  .error-state.visible{display:block}
+  .error-icon{font-size:40px;margin-bottom:16px}
+  .error-title{font-size:18px;font-weight:600;color:var(--red);margin-bottom:8px}
+  .error-detail{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+  .error-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .retry-btn{padding:10px 24px;border-radius:10px;border:none;background:var(--red);color:#fff;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+  .retry-btn:hover{opacity:.85}
+  .offline-btn{padding:10px 24px;border-radius:10px;border:1px solid var(--border);background:var(--glass);color:var(--text);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+  .offline-btn:hover{background:rgba(255,255,255,0.08)}
+
+  /* RESULTS */
+  .results-section{display:none}
+  .results-section.visible{display:block}
+  .components-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  @media(max-width:600px){.components-grid{grid-template-columns:1fr}}
+  .component-item{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;animation:fadeUp 0.35s ease both;transition:all 0.3s ease}
+  .component-item:hover{background:rgba(255,255,255,0.06);border-color:rgba(59,130,246,0.3);box-shadow:0 0 15px rgba(59,130,246,0.15);transform:translateY(-2px)}
+  .component-item:nth-child(1){animation-delay:.05s}
+  .component-item:nth-child(2){animation-delay:.1s}
+  .component-item:nth-child(3){animation-delay:.15s}
+  .component-item:nth-child(4){animation-delay:.2s}
+  .component-item:nth-child(5){animation-delay:.25s}
+  .component-item:nth-child(6){animation-delay:.3s}
+  .component-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),transparent)}
+  .component-type{font-size:10px;font-family:var(--mono);color:var(--blue);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px}
+  .component-name{font-size:15px;font-weight:600;margin-bottom:4px}
+  .component-spec{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .component-price{font-size:14px;font-family:var(--mono);color:var(--orange);font-weight:600}
+  .component-alt{font-size:11px;color:var(--muted);font-style:italic;margin-bottom:6px}
+  .total-bar{display:flex;justify-content:space-between;align-items:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:16px 20px;margin-bottom:20px}
+  .total-label{font-size:13px;color:var(--muted)}
+  .total-value{font-size:24px;font-weight:700;font-family:var(--mono);color:var(--blue)}
+
+  .compat-list{display:flex;flex-direction:column;gap:10px}
+  .compat-item{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--glass);animation:fadeUp 0.35s ease both}
+  .compat-item:nth-child(1){animation-delay:.05s}
+  .compat-item:nth-child(2){animation-delay:.1s}
+  .compat-item:nth-child(3){animation-delay:.15s}
+  .compat-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+  .compat-title{font-size:13px;font-weight:600;margin-bottom:2px}
+  .compat-detail{font-size:12px;color:var(--muted)}
+  .compat-item.ok{border-color:rgba(34,197,94,0.2)}
+  .compat-item.warn{border-color:rgba(234,179,8,0.2)}
+  .compat-item.fail{border-color:rgba(239,68,68,0.2)}
+
+  .os-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:500px){.os-grid{grid-template-columns:1fr}}
+  .os-card{padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--glass);text-align:center;animation:fadeUp 0.35s ease both;transition:all 0.3s ease}
+  .os-card:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.2);box-shadow:0 0 15px rgba(255,255,255,0.05);transform:translateY(-2px)}
+  .os-card:nth-child(1){animation-delay:.05s}
+  .os-card:nth-child(2){animation-delay:.1s}
+  .os-card:nth-child(3){animation-delay:.15s}
+  .os-card.recommended{border-color:var(--green);background:rgba(34,197,94,0.08);box-shadow:0 0 20px rgba(34,197,94,0.15)}
+  .os-card.recommended:hover{box-shadow:0 0 25px rgba(34,197,94,0.25);border-color:rgba(34,197,94,0.5)}
+  .rec-badge{display:inline-block;background:var(--green);color:#000;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:4px;margin-bottom:8px}
+  .os-icon{font-size:28px;margin-bottom:8px}
+  .os-name{font-size:14px;font-weight:600;margin-bottom:4px}
+  .os-ram{font-size:11px;font-family:var(--mono);color:var(--muted);margin-bottom:6px}
+  .os-reason{font-size:11px;color:var(--muted);line-height:1.4}
+
+  .chart-wrap{position:relative;height:260px}
+  .bottleneck-bar-wrap{margin:12px 0}
+  .bottleneck-label{display:flex;justify-content:space-between;font-size:12px;font-family:var(--mono);margin-bottom:6px}
+  .bottleneck-track{height:10px;border-radius:5px;background:var(--border);overflow:hidden}
+  .bottleneck-fill{height:100%;border-radius:5px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+
+  .edu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:600px){.edu-grid{grid-template-columns:1fr}}
+  .edu-card{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .edu-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;background:var(--glass);transition:background .2s}
+  .edu-header:hover{background:rgba(255,255,255,0.06)}
+  .edu-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .edu-arrow{color:var(--muted);font-size:12px;transition:transform .2s}
+  .edu-header.open .edu-arrow{transform:rotate(180deg)}
+  .edu-body{display:none;padding:14px 16px;font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border)}
+  .edu-body.visible{display:block}
+
+  .export-btn{background:var(--glass);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:14px;font-weight:500;padding:12px 20px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+  .export-btn:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2)}
+
+  .source-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-family:var(--mono);padding:3px 10px;border-radius:999px;margin-left:12px;vertical-align:middle}
+  .source-badge.ai{background:rgba(59,130,246,0.12);color:var(--blue);border:1px solid rgba(59,130,246,0.25)}
+  .source-badge.curated{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.25)}
+  .source-badge.offline{background:rgba(234,179,8,0.12);color:var(--yellow);border:1px solid rgba(234,179,8,0.25)}
+  .source-badge.ai-live{background:rgba(59,130,246,0.12);color:var(--blue);border:1px solid rgba(59,130,246,0.25)}
+
+  .hero-links{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+  .upgrade-link-btn{display:inline-flex;align-items:center;gap:8px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:999px;padding:8px 20px;font-size:13px;font-family:var(--sans);font-weight:600;color:var(--green);cursor:pointer;transition:all .2s;margin-top:16px;text-decoration:none}
+  .upgrade-link-btn:hover{background:rgba(34,197,94,0.2);transform:translateY(-1px)}
+
+  /* QR MODAL */
+  .qr-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center}
+  .qr-overlay.visible{display:flex}
+  .qr-modal{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:40px;max-width:380px;width:90%;text-align:center;animation:fadeUp .3s ease}
+  .qr-modal h3{font-size:20px;font-weight:700;margin-bottom:8px}
+  .qr-modal p{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+  .qr-box{background:#fff;border-radius:16px;padding:16px;display:inline-block;margin-bottom:20px}
+  .qr-url{font-size:12px;font-family:var(--mono);color:var(--blue);word-break:break-all;margin-bottom:20px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px 14px}
+  .qr-close-btn{background:var(--glass);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:14px;padding:10px 24px;cursor:pointer;transition:all .2s}
+  .qr-close-btn:hover{background:rgba(255,255,255,0.08)}
+
+  /* SHOP LINKS */
+  .shop-links{display:flex;gap:6px;margin-top:10px}
+  .shop-link{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:10px;font-family:var(--mono);font-weight:600;text-decoration:none;transition:all .15s;white-space:nowrap}
+  .shop-link.amazon{background:rgba(255,153,0,0.12);border:1px solid rgba(255,153,0,0.3);color:#ff9900}
+  .shop-link.amazon:hover{background:rgba(255,153,0,0.25);border-color:#ff9900}
+  .shop-link.flipkart{background:rgba(40,116,240,0.12);border:1px solid rgba(40,116,240,0.3);color:#2874f0}
+  .shop-link.flipkart:hover{background:rgba(40,116,240,0.25);border-color:#2874f0}
+
+  /* DOUGHNUT CHART CARD */
+  .doughnut-wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center}
+  @media(max-width:580px){.doughnut-wrap{grid-template-columns:1fr}}
+  .doughnut-chart-box{position:relative;height:220px}
+  .doughnut-legend{display:flex;flex-direction:column;gap:10px}
+  .legend-item{display:flex;align-items:center;gap:10px;font-size:13px}
+  .legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+  .legend-name{flex:1;color:var(--muted)}
+  .legend-pct{font-family:var(--mono);font-size:12px;color:var(--text);font-weight:600}
+
+  /* ACCESSIBILITY — boosted contrast on muted where needed */
+  .compat-detail{font-size:12px;color:#94a3b8}
+  .component-spec{font-size:12px;color:#94a3b8;margin-bottom:8px}
+  .os-reason{font-size:11px;color:#94a3b8;line-height:1.4}
+  .use-case-desc{font-size:11px;color:#94a3b8;line-height:1.4}
+
+  footer{text-align:center;padding:32px;font-size:12px;color:var(--muted);position:relative;z-index:1;border-top:1px solid var(--border);font-family:var(--mono)}
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Build My PC</h1>
+  <p>Build your perfect PC in seconds. Enter your budget and use case to receive the best hardware recommendations for your budget, complete with compatibility checks and performance insights.</p>
+  <div class="hero-links">
+    <a href="upgrade.html" class="upgrade-link-btn">&#128295; Already Have a PC? Check Upgrade Path</a>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qrOverlay">
+  <div class="qr-modal">
+    <h3>&#128247; Scan to Try It</h3>
+    <p>Share this tool with judges or visitors. Scan the QR code to open on any phone.</p>
+    <div class="qr-box"><canvas id="qrCanvas" width="200" height="200"></canvas></div>
+    <div class="qr-url" id="qrUrlText">budgetarchitect.netlify.app</div>
+    <button class="qr-close-btn" onclick="document.getElementById('qrOverlay').classList.remove('visible')">&#10005; Close</button>
+  </div>
+</div>
+
+
+<div class="offline-banner" id="offlineBanner">
+  <div class="offline-inner">⚠️ &nbsp; No internet detected — showing recommendations from our built-in offline component database.</div>
+</div>
+
+<div class="container">
+
+  <div class="card">
+    <div class="section-label">01 &nbsp; Set Your Budget</div>
+    <div class="budget-display">
+      <div class="budget-value-wrap" id="budgetDisplayWrap" title="Click to enter amount manually">
+        <div class="budget-value" id="budgetDisplay">&#8377;30,000</div>
+        <span class="budget-edit-btn">&#9998;</span>
+      </div>
+      <input type="number" id="budgetInput" class="budget-edit-input" min="3000" max="150000" step="1000" value="30000" style="display:none" aria-label="Enter budget manually">
+      <div class="budget-label">Approximate budget in Indian Rupees (Click amount to type)</div>
+    </div>
+    <div class="slider-wrap">
+      <input type="range" id="budgetSlider" min="3000" max="150000" step="1000" value="30000" aria-label="Budget slider" aria-valuemin="3000" aria-valuemax="150000">
+    </div>
+    <div class="slider-ticks">
+      <span data-val="3000">&#8377;3K</span>
+      <span data-val="25000">&#8377;25K</span>
+      <span data-val="50000">&#8377;50K</span>
+      <span data-val="75000">&#8377;75K</span>
+      <span data-val="100000">&#8377;100K</span>
+      <span data-val="125000">&#8377;125K</span>
+      <span data-val="150000">&#8377;150K</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">02 &nbsp; Select Use-Case</div>
+    <div class="use-cases">
+      <div class="use-case-card gaming" data-uc="Gaming">
+        <div class="use-case-icon">&#127918;</div>
+        <div class="use-case-name">Gaming</div>
+        <div class="use-case-desc">High FPS, GPU-heavy, Windows preferred</div>
+      </div>
+      <div class="use-case-card video" data-uc="Video Editing">
+        <div class="use-case-icon">&#127916;</div>
+        <div class="use-case-name">Video Editing</div>
+        <div class="use-case-desc">Multi-core CPU, high RAM, NVMe storage</div>
+      </div>
+      <div class="use-case-card programming" data-uc="Programming">
+        <div class="use-case-icon">&#128187;</div>
+        <div class="use-case-name">Programming</div>
+        <div class="use-case-desc">Multi-tasking, Linux-friendly, RAM first</div>
+      </div>
+      <div class="use-case-card office" data-uc="Office Work">
+        <div class="use-case-icon">&#128202;</div>
+        <div class="use-case-name">Office Work</div>
+        <div class="use-case-desc">Integrated GPU, budget-efficient builds</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="build-btn" id="buildBtn" disabled>
+    <span>&#9889;</span> Select a use-case to generate your build
+  </button>
+
+  <!-- Skeleton -->
+  <div class="skeleton-section" id="skeletonSection">
+    <div class="skeleton-card">
+      <div class="skeleton-label"></div>
+      <div class="skeleton-grid">
+        <div class="skeleton-item"></div>
+        <div class="skeleton-item"></div>
+        <div class="skeleton-item"></div>
+        <div class="skeleton-item"></div>
+      </div>
+      <div class="skeleton-bar w80"></div>
+    </div>
+    <div class="skeleton-card">
+      <div class="skeleton-label"></div>
+      <div class="skeleton-status">
+        <div class="skeleton-status-item"></div>
+        <div class="skeleton-status-item"></div>
+        <div class="skeleton-status-item"></div>
+      </div>
+    </div>
+    <div class="skeleton-card">
+      <div class="skeleton-label"></div>
+      <div class="skeleton-bar w60"></div>
+      <div class="skeleton-bar w80"></div>
+      <div class="skeleton-bar w40"></div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" id="errorState">
+    <div class="error-icon">&#9889;</div>
+    <div class="error-title">AI Connection Failed</div>
+    <div class="error-detail" id="errorDetail">Could not reach the AI server. You can retry or use our offline database for an instant build recommendation.</div>
+    <div class="error-actions">
+      <button class="retry-btn" id="retryBtn">&#128260; Retry with AI</button>
+      <button class="offline-btn" id="useOfflineBtn">&#128230; Use Offline Database</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+
+    <div class="card animate-in" style="animation-delay:.0s">
+      <div class="section-label">03 &nbsp; Recommended Build <span class="source-badge" id="sourceBadge"></span></div>
+      <div class="components-grid" id="componentsGrid"></div>
+      
+      <div id="advancedComponentsWrap" style="display:none; margin-bottom: 20px;">
+        <button id="toggleAdvancedBtn" class="export-btn" style="width: 100%; justify-content: center; margin-bottom: 16px; font-size: 13px; background: rgba(255,255,255,0.02);">&#9660; Show Advanced Details (Storage, PSU, Motherboard)</button>
+        <div class="components-grid" id="advancedComponentsGrid" style="display:none;"></div>
+      </div>
+
+      <div class="total-bar">
+        <span class="total-label">Estimated Total</span>
+        <span class="total-value" id="totalCost">-</span>
+      </div>
+      <div id="upgradePathWrap" style="background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #d8b4fe; display: none;">
+        <strong style="color: #e879f9;">&#128640; Future Upgrade Path:</strong> <span id="upgradePathText"></span>
+      </div>
+      <p style="font-size:11px;color:var(--muted);text-align:right;margin-top:-12px;font-family:var(--mono)">&#9432; Prices indicative as of June 2026. Check retailers for current rates.</p>
+    </div>
+
+    <div class="card animate-in" style="animation-delay:.08s">
+      <div class="section-label">04 &nbsp; Compatibility Check</div>
+      <div class="compat-list" id="compatList" role="list"></div>
+    </div>
+
+    <div class="card animate-in" style="animation-delay:.16s">
+      <div class="section-label">05 &nbsp; OS Recommendation</div>
+      <div class="os-grid" id="osGrid"></div>
+    </div>
+
+    <div class="card animate-in" style="animation-delay:.24s">
+      <div class="section-label">06 &nbsp; Performance Balance</div>
+      <div id="bottleneckSection"></div>
+    </div>
+
+    <div class="card animate-in" style="animation-delay:.32s">
+      <div class="section-label">07 &nbsp; Price vs. Performance</div>
+      <div class="chart-wrap"><canvas id="pvpChart"></canvas></div>
+    </div>
+
+
+    <div class="card animate-in" style="animation-delay:.36s">
+      <div class="section-label">07b &nbsp; Budget Breakdown</div>
+      <div class="doughnut-wrap">
+        <div class="doughnut-chart-box"><canvas id="doughnutChart"></canvas></div>
+        <div class="doughnut-legend" id="doughnutLegend"></div>
+      </div>
+    </div>
+
+    <div class="card animate-in" style="animation-delay:.4s">
+      <div class="section-label">08 &nbsp; Learn About Your Build</div>
+      <div class="edu-grid" id="eduGrid"></div>
+    </div>
+
+    <div class="card animate-in" style="animation-delay:.48s;display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="export-btn" id="copyBtn">&#128203; Copy Build Summary</button>
+      <button class="export-btn" id="resetBtn">&#128260; Start Over</button>
+    </div>
+
+  </div>
+</div>
+
+
+<footer>Build My PC</footer>
+
+<script>
+var OFFLINE_DB = {
+  "Gaming": [
+    {
+      range:[15000,35000],
+      components:[
+        {type:"CPU",name:"AMD Ryzen 5 5500",spec:"6C/12T, 4.2GHz Boost, AM4",price:9500,altName:"Intel Core i3-12100F",altSpec:"4C/8T, 4.3GHz Boost, LGA1700 - similar price"},
+        {type:"GPU",name:"NVIDIA GTX 1650 4GB",spec:"GDDR6, 128-bit, 75W TDP",price:12500},
+        {type:"RAM",name:"Corsair 8GB DDR4",spec:"3200MHz, Single Channel",price:1800},
+        {type:"Storage",name:"Kingston 480GB SATA SSD",spec:"500MB/s Read, 2.5 inch",price:2800},
+        {type:"Motherboard",name:"MSI A520M-A PRO",spec:"AM4, DDR4, mATX",price:5500},
+        {type:"PSU",name:"Corsair CV450",spec:"450W, 80+ Bronze",price:2900}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"Ryzen 5 5500 uses AM4 - matches MSI A520M-A PRO perfectly."},
+        {status:"ok",title:"RAM Compatibility",detail:"DDR4 3200MHz supported on A520 platform without issues."},
+        {status:"warn",title:"Power Requirement",detail:"GTX 1650 needs ~350W. 450W PSU gives thin headroom - avoid overclocking."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Best game compatibility, DirectX 12 support.",recommended:true},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"Possible with Proton/Steam but limited game support.",recommended:false},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Not recommended for gaming - driver support limited.",recommended:false}
+      ],
+      bottleneck:{cpu_score:62,gpu_score:88,analysis:"GPU is the bottleneck at 1080p. The GTX 1650 will be pushed hard at medium settings. CPU has headroom to spare."},
+      performance_tiers:[
+        {label:"Budget (Rs.25K)",performance:48,cost:25000},
+        {label:"This Build",performance:62,cost:35000},
+        {label:"Premium (Rs.60K)",performance:80,cost:60000}
+      ],
+      edu_cards:[
+        {title:"TDP Explained",body:"TDP is the maximum heat a component generates. The GTX 1650 has a 75W TDP so it needs no external power connector - great for tight budget builds."},
+        {title:"DDR4 vs DDR5",body:"Your build uses DDR4 3200MHz - the sweet spot for budget AM4 builds. DDR5 is faster but costs 2x more and needs newer platforms."},
+        {title:"SATA SSD vs NVMe",body:"SATA SSDs run at ~500MB/s, 5x faster than HDDs. NVMe hits 3500MB/s but costs more. For gaming, SATA SSD load times are nearly identical to NVMe."},
+        {title:"Why 8GB RAM is Fine",body:"For entry-level 1080p gaming, 8GB DDR4 handles most titles. Upgrade to 16GB later for open-world games like GTA VI."}
+      ]
+    },
+    {
+      range:[35001,75000],
+      components:[
+        {type:"CPU",name:"Intel Core i5-13400F",spec:"10C/16T, 4.6GHz Boost, LGA1700",price:15000,altName:"AMD Ryzen 5 7600",altSpec:"6C/12T, 5.1GHz Boost, AM5 - similar price"},
+        {type:"GPU",name:"NVIDIA RTX 3060 12GB",spec:"GDDR6, 192-bit, 170W TDP",price:28000},
+        {type:"RAM",name:"G.Skill 16GB DDR4",spec:"3200MHz, Dual Channel",price:3500},
+        {type:"Storage",name:"WD Blue 1TB NVMe",spec:"3500MB/s Read, PCIe 3.0",price:5500},
+        {type:"Motherboard",name:"Gigabyte B660M DS3H",spec:"LGA1700, DDR4, mATX",price:8000},
+        {type:"PSU",name:"Cooler Master MWE 650W",spec:"650W, 80+ Bronze",price:5500}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"i5-13400F on LGA1700 - perfect match with B660M chipset."},
+        {status:"ok",title:"RAM Compatibility",detail:"DDR4 dual-channel on B660 is fully supported and optimised."},
+        {status:"ok",title:"Power Requirement",detail:"RTX 3060 needs ~500W. 650W Bronze PSU provides comfortable headroom."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Best for gaming - full DirectX 12 Ultimate, DLSS 3 support.",recommended:true},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"Steam + Proton works for many titles but AAA anti-cheat games will not run.",recommended:false},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Not ideal for gaming workloads.",recommended:false}
+      ],
+      bottleneck:{cpu_score:78,gpu_score:85,analysis:"Well-balanced build. GPU leads at 1440p. CPU handles 1080p+ without bottlenecking the RTX 3060."},
+      performance_tiers:[
+        {label:"Entry (Rs.35K)",performance:62,cost:35000},
+        {label:"This Build",performance:82,cost:65000},
+        {label:"Premium (Rs.1L)",performance:93,cost:100000}
+      ],
+      edu_cards:[
+        {title:"RTX 3060 and DLSS",body:"The RTX 3060 supports DLSS 2.0 - AI upscaling that boosts FPS in supported games like Cyberpunk 2077. At 1080p you get 80-100+ FPS on ultra settings."},
+        {title:"Dual Channel RAM",body:"Your 16GB runs in dual-channel mode (2x8GB). This doubles memory bandwidth vs single-channel, giving ~15% better gaming performance."},
+        {title:"NVMe Speed Gains",body:"The WD Blue NVMe reads at 3500MB/s vs 500MB/s for SATA. Games like Forza Horizon load 3x faster on NVMe."},
+        {title:"i5-13400F Value",body:"The i5-13400F is Intel best budget gaming CPU - no integrated GPU so it is cheaper, 10 cores, and handles game streaming. Pairs perfectly with RTX 3060 at 1080p."}
+      ]
+    },
+    {
+      range:[75001,150000],
+      components:[
+        {type:"CPU",name:"Intel Core i7-13700F",spec:"16C/24T, 5.2GHz Boost, LGA1700",price:28000,altName:"AMD Ryzen 7 7700X",altSpec:"8C/16T, 5.4GHz Boost, AM5 - similar price"},
+        {type:"GPU",name:"NVIDIA RTX 4070 12GB",spec:"GDDR6X, 192-bit, DLSS 3",price:50000},
+        {type:"RAM",name:"Corsair 32GB DDR5",spec:"5200MHz, Dual Channel",price:9000},
+        {type:"Storage",name:"Samsung 980 Pro 1TB NVMe",spec:"7000MB/s Read, PCIe 4.0",price:8500},
+        {type:"Motherboard",name:"MSI MAG Z790 Tomahawk",spec:"LGA1700, DDR5, ATX",price:18000},
+        {type:"PSU",name:"Seasonic Focus 750W Gold",spec:"750W, 80+ Gold, Fully Modular",price:8500}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"i7-13700F on LGA1700 - perfect with Z790 Tomahawk for full overclocking support."},
+        {status:"ok",title:"RAM Compatibility",detail:"DDR5 5200MHz on Z790 - native support, XMP profile auto-configures."},
+        {status:"ok",title:"Power Requirement",detail:"RTX 4070 needs ~600W. 750W Gold PSU is ideal with room for future upgrades."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Full DirectX 12 Ultimate, DLSS 3 Frame Generation, and best game support.",recommended:true},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"High-end GPU wasted on Linux gaming - limited AAA title support.",recommended:false},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Not recommended for a premium gaming rig.",recommended:false}
+      ],
+      bottleneck:{cpu_score:88,gpu_score:90,analysis:"Extremely balanced high-end build. Both CPU and GPU are well-matched for 1440p and 4K gaming."},
+      performance_tiers:[
+        {label:"Mid (Rs.65K)",performance:82,cost:65000},
+        {label:"This Build",performance:95,cost:122000},
+        {label:"Ultra (Rs.2L)",performance:99,cost:200000}
+      ],
+      edu_cards:[
+        {title:"DLSS 3 Frame Gen",body:"RTX 4070 supports DLSS 3 Frame Generation - AI creates entirely new frames, doubling FPS in supported titles like Cyberpunk 2077 and Alan Wake 2."},
+        {title:"DDR5 Advantage",body:"DDR5 at 5200MHz gives 50% more bandwidth than DDR4 3200MHz. Your i7-13700F 16 cores can fully utilise this for game streaming and background tasks."},
+        {title:"PCIe 4.0 NVMe",body:"Samsung 980 Pro at 7000MB/s is 2x faster than PCIe 3.0 NVMe. DirectStorage in Windows 11 lets games stream assets directly to GPU reducing CPU load."},
+        {title:"Z790 Overclocking",body:"The MSI Z790 Tomahawk supports full CPU overclocking. The i7-13700F can be pushed to 5.4GHz boost with good cooling, giving extra frames in CPU-bound games."}
+      ]
+    }
+  ],
+  "Video Editing": [
+    {
+      range:[15000,40000],
+      components:[
+        {type:"CPU",name:"AMD Ryzen 5 5600G",spec:"6C/12T, 4.4GHz, Radeon Vega 7",price:10500,altName:"Intel Core i5-12400",altSpec:"6C/12T, 4.4GHz Boost, LGA1700, UHD 730 - similar price"},
+        {type:"GPU",name:"Integrated Radeon Vega 7",spec:"Shared VRAM, basic rendering",price:0},
+        {type:"RAM",name:"Kingston 16GB DDR4",spec:"3200MHz, Dual Channel",price:3500},
+        {type:"Storage",name:"WD Green 512GB NVMe",spec:"2400MB/s Read, PCIe 3.0",price:3500},
+        {type:"Motherboard",name:"MSI B550M PRO-VDH",spec:"AM4, DDR4, mATX",price:6500},
+        {type:"PSU",name:"Antec Atom 550W",spec:"550W, 80+ Bronze",price:3000}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"Ryzen 5 5600G on AM4 - compatible with B550M chipset."},
+        {status:"ok",title:"RAM Compatibility",detail:"DDR4 3200MHz dual-channel fully supported and boosts iGPU performance."},
+        {status:"warn",title:"GPU Limitation",detail:"Integrated Vega 7 handles 1080p editing only. 4K editing will lag significantly."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"DaVinci Resolve and Premiere Pro run best on Windows.",recommended:true},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"DaVinci Resolve Free works on Linux and saves Rs.5000 vs Windows.",recommended:false},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Kdenlive works but professional workflows are harder.",recommended:false}
+      ],
+      bottleneck:{cpu_score:80,gpu_score:55,analysis:"CPU has decent multi-core performance but the integrated GPU is the clear bottleneck for hardware-accelerated encoding and rendering."},
+      performance_tiers:[
+        {label:"Budget (Rs.25K)",performance:40,cost:25000},
+        {label:"This Build",performance:58,cost:27500},
+        {label:"Mid (Rs.75K)",performance:80,cost:75000}
+      ],
+      edu_cards:[
+        {title:"GPU Acceleration",body:"Video editing software like DaVinci Resolve uses GPU for rendering. Integrated Vega 7 has limited VRAM - for serious editing, save up for a dedicated GPU like the RX 6600."},
+        {title:"Why NVMe Matters",body:"Video editing reads large files constantly. Your 2400MB/s NVMe is much better than SATA for timeline scrubbing and export."},
+        {title:"RAM for Editing",body:"16GB DDR4 dual-channel is the minimum for 1080p editing. Dual-channel also boosts your integrated GPU performance by ~30% since it shares system RAM."},
+        {title:"CPU Rendering",body:"The Ryzen 5 5600G 6 cores handle Handbrake software encoding well. Use AMD VCE (built into iGPU) in DaVinci Resolve for faster exports."}
+      ]
+    },
+    {
+      range:[40001,150000],
+      components:[
+        {type:"CPU",name:"AMD Ryzen 7 5700X",spec:"8C/16T, 4.6GHz Boost, AM4",price:15000,altName:"Intel Core i5-13400F",altSpec:"10C/16T, 4.6GHz Boost, LGA1700 - similar price"},
+        {type:"GPU",name:"AMD RX 6600 8GB",spec:"GDDR6, 128-bit, OpenCL",price:18000},
+        {type:"RAM",name:"Corsair 32GB DDR4",spec:"3200MHz, Dual Channel",price:6500},
+        {type:"Storage",name:"Samsung 870 EVO 1TB SSD",spec:"560MB/s Read, SATA",price:6000},
+        {type:"Motherboard",name:"Gigabyte B550 AORUS Elite",spec:"AM4, DDR4, ATX",price:11000},
+        {type:"PSU",name:"Corsair RM650x",spec:"650W, 80+ Gold, Modular",price:7500}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"Ryzen 7 5700X on AM4 - perfect compatibility with B550 AORUS Elite."},
+        {status:"ok",title:"RAM Compatibility",detail:"32GB DDR4 dual-channel is ideal for multi-track 1080p/4K editing workflows."},
+        {status:"ok",title:"Power Requirement",detail:"RX 6600 needs ~500W. 650W Gold PSU provides clean power for long render sessions."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Premiere Pro, After Effects, and DaVinci Resolve work best on Windows.",recommended:true},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"DaVinci Resolve Free for Linux is viable and saves on OS cost.",recommended:false},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"ROCm GPU compute works on Fedora but setup is complex.",recommended:false}
+      ],
+      bottleneck:{cpu_score:85,gpu_score:78,analysis:"Excellent balance for video editing. Ryzen 7 8 cores shine in multi-track timelines. RX 6600 handles 1080p hardware encoding and 4K proxies well."},
+      performance_tiers:[
+        {label:"Budget (Rs.30K)",performance:55,cost:30000},
+        {label:"This Build",performance:82,cost:64000},
+        {label:"Premium (Rs.1.2L)",performance:94,cost:120000}
+      ],
+      edu_cards:[
+        {title:"8 Cores for Editing",body:"The Ryzen 7 8 cores mean DaVinci Resolve can run colour grading, audio mixing, and rendering simultaneously. Premiere Pro multi-frame rendering uses all 16 threads."},
+        {title:"32GB RAM",body:"32GB is the sweet spot for 4K editing - you can keep multiple apps open without page-file swapping which kills editing performance."},
+        {title:"RX 6600 Encoding",body:"AMD VCE encoder in the RX 6600 does hardware H.264/H.265 encoding at near lossless quality. DaVinci Resolve exports 4K video 4x faster than CPU-only renders."},
+        {title:"Gold PSU for Long Renders",body:"Long render sessions stress PSUs more than gaming. A Corsair RM650x Gold PSU runs cooler and more efficiently under sustained load - important for 2-4 hour render jobs."}
+      ]
+    }
+  ],
+  "Programming": [
+    {
+      range:[15000,30000],
+      components:[
+        {type:"CPU",name:"AMD Ryzen 5 5600G",spec:"6C/12T, 4.4GHz, Integrated Vega 7",price:10500,altName:"Intel Core i3-12100",altSpec:"4C/8T, 4.3GHz Boost, LGA1700, UHD 730 - similar price"},
+        {type:"GPU",name:"Integrated Radeon Vega 7",spec:"Shared system RAM, no extra cost",price:0},
+        {type:"RAM",name:"G.Skill 16GB DDR4",spec:"3200MHz, Dual Channel",price:3500},
+        {type:"Storage",name:"Kingston NV2 512GB NVMe",spec:"3500MB/s Read, PCIe 4.0",price:3200},
+        {type:"Motherboard",name:"MSI B550M PRO-VDH",spec:"AM4, DDR4, mATX",price:6500},
+        {type:"PSU",name:"Antec Atom 500W",spec:"500W, 80+ Bronze",price:3000}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"Ryzen 5 5600G on AM4 - perfect match with B550M PRO-VDH."},
+        {status:"ok",title:"RAM Compatibility",detail:"DDR4 3200MHz dual-channel fully supported and boosts iGPU performance."},
+        {status:"ok",title:"Power Requirement",detail:"65W TDP CPU with no discrete GPU - 500W is more than enough."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Good for development but consumes 4GB RAM leaving 12GB for your IDE and tools.",recommended:false},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"Best for programming - only 1.2GB idle RAM, native bash, apt package manager, Docker.",recommended:true},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Excellent for developers who want bleeding-edge tools like latest Python, Node.js, Rust.",recommended:false}
+      ],
+      bottleneck:{cpu_score:82,gpu_score:40,analysis:"CPU is doing all the work - GPU is irrelevant for programming. All 6 cores are used by your IDE, compiler, Docker containers, and browser simultaneously."},
+      performance_tiers:[
+        {label:"Min (Rs.15K)",performance:45,cost:15000},
+        {label:"This Build",performance:78,cost:26700},
+        {label:"With 32GB",performance:88,cost:31700}
+      ],
+      edu_cards:[
+        {title:"Why Ubuntu?",body:"Ubuntu 22.04 LTS uses ~1.2GB idle vs Windows 4GB. That means 14.8GB free for your IDE, Docker, browser, and terminal - crucial for running multiple dev services."},
+        {title:"NVMe for Developers",body:"Fast NVMe storage speeds up npm install, pip install, Docker image pulls, and Git operations. Compiling large projects can be 2x faster on NVMe vs SATA."},
+        {title:"16GB RAM Sweet Spot",body:"16GB lets you run VS Code, 5 browser tabs, a Docker container, and a local database simultaneously. Upgrade to 32GB only if you are doing large ML models or running VMs."},
+        {title:"Multi-Core Compiling",body:"The Ryzen 5 5600G 6C/12T handles parallel compilation well. Use make -j12 to use all threads to compile large C++ or Rust projects in parallel."}
+      ]
+    },
+    {
+      range:[30001,60000],
+      components:[
+        {type:"CPU",name:"AMD Ryzen 5 5600",spec:"6C/12T, 4.4GHz Boost, AM4",price:12000,altName:"Intel Core i5-12400F",altSpec:"6C/12T, 4.4GHz Boost, LGA1700 - similar price"},
+        {type:"GPU",name:"NVIDIA GTX 1650 4GB",spec:"GDDR6, CUDA-capable, 75W TDP",price:12500},
+        {type:"RAM",name:"Corsair 32GB DDR4",spec:"3200MHz, Dual Channel",price:6500},
+        {type:"Storage",name:"WD Blue 1TB NVMe",spec:"3500MB/s Read, PCIe 3.0",price:5500},
+        {type:"Motherboard",name:"MSI B550M PRO-VDH",spec:"AM4, DDR4, mATX",price:7500},
+        {type:"PSU",name:"Cooler Master MWE 550W",spec:"550W, 80+ Bronze",price:3500}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"Ryzen 5 5600 on AM4 - perfect match with B550M PRO-VDH."},
+        {status:"ok",title:"RAM Compatibility",detail:"32GB DDR4 dual-channel runs natively at 3200MHz on B550."},
+        {status:"ok",title:"Power Requirement",detail:"GTX 1650 needs ~250W total. 550W Bronze PSU gives comfortable headroom."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Needed for .NET, Visual Studio, or Android Studio heavy workflows.",recommended:false},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"Best for programming - low idle RAM, native Docker, and CUDA drivers install cleanly for the GTX 1650.",recommended:true},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Great for bleeding-edge toolchains, slightly trickier NVIDIA driver setup than Ubuntu.",recommended:false}
+      ],
+      bottleneck:{cpu_score:85,gpu_score:50,analysis:"CPU and RAM carry most dev workloads. The GTX 1650 is a bonus for running small ML models, CUDA experiments, or light gaming on breaks - not a bottleneck for coding itself."},
+      performance_tiers:[
+        {label:"Min (Rs.30K)",performance:60,cost:30000},
+        {label:"This Build",performance:82,cost:47500},
+        {label:"With RTX GPU (Rs.80K)",performance:92,cost:80000}
+      ],
+      edu_cards:[
+        {title:"32GB RAM for Developers",body:"32GB lets you run Docker, multiple VMs, a local database, and a heavy IDE like JetBrains all at once without swapping - especially useful for microservices development."},
+        {title:"Why a GPU for Programming?",body:"A GTX 1650 isn't for graphics - it lets you run small PyTorch/TensorFlow models locally with CUDA, useful if you're learning ML alongside regular development."},
+        {title:"1TB NVMe",body:"Node modules, Docker images, and multiple repo clones add up fast. 1TB NVMe at 3500MB/s keeps builds and container pulls fast even as projects grow."},
+        {title:"AM4 Platform Value",body:"The AM4 socket has been around since 2017, so B550 motherboards and DDR4 RAM are cheap and plentiful - great value if you want to upgrade the CPU later."}
+      ]
+    },
+    {
+      range:[60001,150000],
+      components:[
+        {type:"CPU",name:"AMD Ryzen 7 7700X",spec:"8C/16T, 5.4GHz Boost, AM5",price:28000,altName:"Intel Core i7-13700F",altSpec:"16C/24T, 5.2GHz Boost, LGA1700 - similar price"},
+        {type:"GPU",name:"NVIDIA RTX 4060 8GB",spec:"GDDR6, CUDA, 115W TDP",price:32000},
+        {type:"RAM",name:"Corsair 32GB DDR5",spec:"6000MHz, Dual Channel",price:11000},
+        {type:"Storage",name:"Samsung 980 Pro 1TB NVMe",spec:"7000MB/s Read, PCIe 4.0",price:7000},
+        {type:"Motherboard",name:"MSI B650 Gaming Plus",spec:"AM5, DDR5, ATX",price:13000},
+        {type:"PSU",name:"Seasonic Focus 650W Gold",spec:"650W, 80+ Gold, Modular",price:5500}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"Ryzen 7 7700X on AM5 - perfect match with B650 Gaming Plus."},
+        {status:"ok",title:"RAM Compatibility",detail:"DDR5 6000MHz natively supported on AM5 with EXPO profile."},
+        {status:"ok",title:"Power Requirement",detail:"RTX 4060 needs ~350W total. 650W Gold PSU gives plenty of headroom for sustained workloads."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Needed if your stack relies on WSL2, Docker Desktop, or Windows-only proprietary tools.",recommended:false},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"Best for serious development - full CUDA toolkit support for the RTX 4060, native containers, low overhead.",recommended:true},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Latest kernel and toolchains, good for testing on bleeding-edge environments.",recommended:false}
+      ],
+      bottleneck:{cpu_score:92,gpu_score:75,analysis:"A well-balanced developer workstation. The Ryzen 7 7700X handles heavy compilation and containers, while the RTX 4060 accelerates local ML training, inference, and CUDA-based workloads."},
+      performance_tiers:[
+        {label:"Mid (Rs.45K)",performance:78,cost:45000},
+        {label:"This Build",performance:94,cost:96500},
+        {label:"Ultra (Rs.1.5L)",performance:98,cost:150000}
+      ],
+      edu_cards:[
+        {title:"RTX 4060 for Local AI",body:"8GB VRAM is enough to run quantized local LLMs (7B-13B parameter models) and train small-to-medium ML models without relying on cloud GPU credits."},
+        {title:"DDR5 on AM5",body:"DDR5 6000MHz gives nearly 2x the bandwidth of DDR4 3200MHz - noticeable when compiling large codebases or running multiple containers in parallel."},
+        {title:"PCIe 4.0 NVMe for Big Repos",body:"Samsung 980 Pro at 7000MB/s makes cloning large monorepos, restoring database dumps, and switching between VM snapshots significantly faster."},
+        {title:"AM5 Upgrade Path",body:"AM5 is AMD's current platform and will receive new CPUs for years - this build can be upgraded with a faster CPU later without replacing the motherboard."}
+      ]
+    }
+  ],
+  "Office Work": [
+    {
+      range:[15000,25000],
+      components:[
+        {type:"CPU",name:"AMD Ryzen 5 5500GT",spec:"6C/12T, 4.4GHz, Radeon Vega 7",price:9000,altName:"Intel Core i3-12100",altSpec:"4C/8T, 4.3GHz Boost, LGA1700, UHD 730 - similar price"},
+        {type:"GPU",name:"Integrated Radeon Vega 7",spec:"Shared VRAM, 4K display output",price:0},
+        {type:"RAM",name:"Kingston 8GB DDR4",spec:"3200MHz, Single Channel",price:1800},
+        {type:"Storage",name:"Kingston 480GB SATA SSD",spec:"500MB/s Read, 2.5 inch",price:2800},
+        {type:"Motherboard",name:"Gigabyte A520M DS3H",spec:"AM4, DDR4, mATX",price:5200},
+        {type:"PSU",name:"Circle 450W",spec:"450W, 80+ Bronze",price:2500}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"Ryzen 5 5500GT on AM4 - compatible with A520M DS3H without BIOS update."},
+        {status:"ok",title:"RAM Compatibility",detail:"8GB DDR4 3200MHz works perfectly for office applications."},
+        {status:"ok",title:"Power Requirement",detail:"65W TDP processor, no discrete GPU - 450W is ample. Silent operation guaranteed."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Required for Microsoft Office 365, Teams, and Outlook integration.",recommended:true},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"LibreOffice works but lacks full MS Office compatibility. Saves Rs.5000 on Windows license.",recommended:false},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Works for office tasks but team collaboration tools like Teams are harder to set up.",recommended:false}
+      ],
+      bottleneck:{cpu_score:70,gpu_score:35,analysis:"CPU is more than enough for office tasks. Integrated GPU handles dual 1080p monitors. Upgrading RAM to 16GB is the best next investment."},
+      performance_tiers:[
+        {label:"Min (Rs.15K)",performance:50,cost:15000},
+        {label:"This Build",performance:75,cost:21300},
+        {label:"With 16GB RAM",performance:82,cost:23100}
+      ],
+      edu_cards:[
+        {title:"Integrated GPU",body:"The Radeon Vega 7 supports dual-monitor output at 1080p or 4K. For spreadsheets, presentations, and video calls, integrated graphics performs identically to a dedicated GPU."},
+        {title:"SSD vs HDD",body:"A SATA SSD makes Windows boot in 10 seconds and Excel files open instantly. Old HDDs take 45-90 seconds to boot. The Rs.2800 SSD is the single biggest performance upgrade for office use."},
+        {title:"8GB is Enough",body:"For Chrome, Teams, Excel, and Word simultaneously, 8GB DDR4 is sufficient. If you regularly keep 15+ browser tabs open alongside Teams screen sharing, upgrade to 16GB."},
+        {title:"Silent Operation",body:"The Ryzen 5 5500GT runs cool at 65W TDP - stock cooler is nearly silent in office environments. Great for shared office spaces where fan noise is a concern."}
+      ]
+    },
+    {
+      range:[25001,50000],
+      components:[
+        {type:"CPU",name:"AMD Ryzen 5 5600G",spec:"6C/12T, 4.4GHz, Radeon Vega 7",price:10500,altName:"Intel Core i5-12400",altSpec:"6C/12T, 4.4GHz Boost, LGA1700, UHD 730 - similar price"},
+        {type:"GPU",name:"Integrated Radeon Vega 7",spec:"Shared VRAM, dual 4K output",price:0},
+        {type:"RAM",name:"Kingston 16GB DDR4",spec:"3200MHz, Dual Channel",price:3500},
+        {type:"Storage",name:"Kingston NV2 500GB NVMe",spec:"3000MB/s Read, PCIe 3.0",price:3200},
+        {type:"Motherboard",name:"MSI B550M PRO-VDH",spec:"AM4, DDR4, mATX",price:6500},
+        {type:"PSU",name:"Antec Atom 500W",spec:"500W, 80+ Bronze",price:3000}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"Ryzen 5 5600G on AM4 - perfect match with B550M PRO-VDH."},
+        {status:"ok",title:"RAM Compatibility",detail:"16GB DDR4 dual-channel boosts integrated GPU performance for video calls and presentations."},
+        {status:"ok",title:"Power Requirement",detail:"No discrete GPU - 500W is more than sufficient with room to add a budget GPU later."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Best for MS Office 365, Teams, and enterprise VPN/security tools.",recommended:true},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"LibreOffice and web-based Office 365 work well; saves on Windows licensing.",recommended:false},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Good general desktop, but enterprise collaboration tools need extra setup.",recommended:false}
+      ],
+      bottleneck:{cpu_score:78,gpu_score:40,analysis:"Plenty of headroom for heavy multitasking - dozens of browser tabs, video calls, and Office apps running together without slowdown."},
+      performance_tiers:[
+        {label:"Min (Rs.21K)",performance:60,cost:21300},
+        {label:"This Build",performance:80,cost:26700},
+        {label:"Premium (Rs.50K)",performance:90,cost:50000}
+      ],
+      edu_cards:[
+        {title:"16GB - The Multitasking Sweet Spot",body:"16GB lets you comfortably run Outlook, Teams with video on, 20+ Chrome tabs, and Excel with large spreadsheets simultaneously without slowdown."},
+        {title:"NVMe Boot Speed",body:"This NVMe drive boots Windows in under 10 seconds and opens large Excel/PowerPoint files almost instantly compared to a SATA SSD."},
+        {title:"Dual Monitor Productivity",body:"The Vega 7 iGPU drives two 4K monitors at 60Hz - ideal for comparing documents side-by-side or keeping email open while working."},
+        {title:"Ryzen 5 5600G Value",body:"6 cores comfortably handle modern office software plus background antivirus, VPN, and update processes without feeling sluggish."}
+      ]
+    },
+    {
+      range:[50001,150000],
+      components:[
+        {type:"CPU",name:"AMD Ryzen 7 5700G",spec:"8C/16T, 4.6GHz, Radeon Vega 8",price:16000,altName:"Intel Core i5-13400",altSpec:"10C/16T, 4.6GHz Boost, LGA1700, UHD 730 - similar price"},
+        {type:"GPU",name:"AMD RX 6500 XT 4GB",spec:"GDDR6, 64-bit, low-profile capable",price:14000},
+        {type:"RAM",name:"Corsair 32GB DDR4",spec:"3200MHz, Dual Channel",price:7000},
+        {type:"Storage",name:"WD Blue 1TB NVMe",spec:"3500MB/s Read, PCIe 3.0",price:6500},
+        {type:"Motherboard",name:"Gigabyte B550 AORUS Elite",spec:"AM4, DDR4, ATX",price:9500},
+        {type:"PSU",name:"Corsair CV650",spec:"650W, 80+ Bronze",price:6000}
+      ],
+      compatibility:[
+        {status:"ok",title:"Socket Match",detail:"Ryzen 7 5700G on AM4 - perfect match with B550 AORUS Elite."},
+        {status:"ok",title:"RAM Compatibility",detail:"32GB DDR4 dual-channel is ample for heavy multitasking, large spreadsheets, and multiple VMs."},
+        {status:"ok",title:"Power Requirement",detail:"RX 6500 XT needs ~250W total. 650W Bronze PSU provides comfortable headroom."}
+      ],
+      os:[
+        {name:"Windows 11",icon:"&#129695;",ramUsage:"~4GB idle",reason:"Best for MS Office 365, Teams, multi-monitor management, and enterprise tools.",recommended:true},
+        {name:"Ubuntu 22.04",icon:"&#128039;",ramUsage:"~1.2GB idle",reason:"Great for LibreOffice-heavy workflows and developer-adjacent office tasks.",recommended:false},
+        {name:"Fedora 40",icon:"&#127913;",ramUsage:"~1.5GB idle",reason:"Solid desktop experience but enterprise collaboration tools need extra setup.",recommended:false}
+      ],
+      bottleneck:{cpu_score:85,gpu_score:60,analysis:"A discrete GPU adds smooth support for triple-monitor setups and light design/photo editing alongside heavy office multitasking - well beyond what integrated graphics alone can offer."},
+      performance_tiers:[
+        {label:"Mid (Rs.27K)",performance:75,cost:27000},
+        {label:"This Build",performance:92,cost:59000},
+        {label:"Ultra (Rs.1L)",performance:96,cost:100000}
+      ],
+      edu_cards:[
+        {title:"Why a Discrete GPU for Office?",body:"Beyond two monitors, integrated GPUs can struggle. The RX 6500 XT drives three or more displays smoothly and handles light Photoshop/Canva work that's increasingly common in office roles."},
+        {title:"32GB RAM for Power Users",body:"If your role involves large Excel models, multiple VMs, or running Office apps alongside heavy CRM/ERP software, 32GB keeps everything responsive."},
+        {title:"NVMe for Shared Drives",body:"Fast NVMe storage speeds up syncing large files from SharePoint, OneDrive, or shared network drives - especially noticeable with big PowerPoint decks and PDFs."},
+        {title:"8 Cores for Multitasking",body:"The Ryzen 7 5700G's 8 cores comfortably run Office apps, Teams, antivirus, VPN, and background updates simultaneously without any slowdown."}
+      ]
+    }
+  ]
+};
+
+// Add dynamic upgrade paths to OFFLINE_DB
+Object.keys(OFFLINE_DB).forEach(function(uc) {
+  OFFLINE_DB[uc].forEach(function(tier) {
+    if (uc === 'Gaming') {
+      if (tier.range[1] <= 35000) tier.upgradePath = "Add 8GB more RAM and upgrade the GPU to an RX 6600 for vastly improved 1080p gaming performance.";
+      else if (tier.range[1] <= 75000) tier.upgradePath = "Add a 2TB HDD or another NVMe for bulk game storage. The CPU and GPU will last you years.";
+      else tier.upgradePath = "This is a high-end build. Your next logical upgrade would be a 4K 144Hz monitor to fully utilise the RTX 4070.";
+    } else if (uc === 'Video Editing') {
+      if (tier.range[1] <= 40000) tier.upgradePath = "Add a dedicated GPU like the RTX 3060 to drastically reduce rendering times via CUDA/NVENC.";
+      else tier.upgradePath = "Upgrade RAM to 64GB if working with multiple 4K timelines in DaVinci Resolve or After Effects.";
+    } else if (uc === 'Programming') {
+      if (tier.range[1] <= 30000) tier.upgradePath = "Upgrade RAM to 32GB to comfortably run multiple Docker containers and heavy IDEs simultaneously.";
+      else if (tier.range[1] <= 60000) tier.upgradePath = "Upgrade to a 2TB NVMe SSD as your repositories and Docker images consume space over time.";
+      else tier.upgradePath = "This is a premium dev machine. Consider adding a secondary 4K monitor for better code visibility.";
+    } else if (uc === 'Office Work') {
+      if (tier.range[1] <= 25000) tier.upgradePath = "Upgrade RAM to 16GB if you start using heavier applications or keep 20+ browser tabs open.";
+      else tier.upgradePath = "A secondary monitor is the best upgrade for office productivity with this build.";
+    }
+  });
+});
+
+function getOfflineBuild(budget, useCase) {
+  var tiers = OFFLINE_DB[useCase];
+  if (!tiers) return null;
+  if (budget < tiers[0].range[0]) return tiers[0];
+  if (budget > tiers[tiers.length - 1].range[1]) return tiers[tiers.length - 1];
+  for (var i = 0; i < tiers.length; i++) {
+    if (budget >= tiers[i].range[0] && budget <= tiers[i].range[1]) {
+      return tiers[i];
+    }
+  }
+  return tiers[0];
+}
+
+var selectedUseCase = null;
+var pvpChartInstance = null;
+var lastBuildData = null;
+
+var budgetSlider = document.getElementById('budgetSlider');
+var budgetDisplay = document.getElementById('budgetDisplay');
+var budgetDisplayWrap = document.getElementById('budgetDisplayWrap');
+var budgetInput = document.getElementById('budgetInput');
+var buildBtn = document.getElementById('buildBtn');
+var skeletonSection = document.getElementById('skeletonSection');
+var errorState = document.getElementById('errorState');
+var resultsSection = document.getElementById('resultsSection');
+
+// Helper to format budget text
+function updateBudgetText(v) {
+  if (v >= 100000) {
+    budgetDisplay.textContent = '\u20B9' + (v/100000).toFixed(2).replace('.00','') + ' Lakh';
+  } else {
+    budgetDisplay.textContent = '\u20B9' + v.toLocaleString('en-IN');
+  }
+}
+
+budgetSlider.addEventListener('input', function() {
+  var v = parseInt(budgetSlider.value);
+  updateBudgetText(v);
+  budgetInput.value = v;
+  updateSliderFill();
+});
+
+function updateSliderFill() {
+  var pct = ((budgetSlider.value - budgetSlider.min) / (budgetSlider.max - budgetSlider.min)) * 100;
+  budgetSlider.style.background = 'linear-gradient(90deg, #3b82f6 ' + pct + '%, rgba(255,255,255,0.08) ' + pct + '%)';
+}
+updateSliderFill();
+
+// Edit manual budget on click
+budgetDisplayWrap.addEventListener('click', function() {
+  budgetDisplayWrap.style.display = 'none';
+  budgetInput.style.display = 'inline-block';
+  budgetInput.value = budgetSlider.value;
+  budgetInput.focus();
+  budgetInput.select();
+});
+
+function saveManualBudget() {
+  var val = parseInt(budgetInput.value);
+  if (isNaN(val)) val = parseInt(budgetSlider.value);
+  
+  var minBudget = parseInt(budgetInput.min) || 3000;
+  var maxBudget = parseInt(budgetInput.max) || 150000;
+  if (val < minBudget) val = minBudget;
+  if (val > maxBudget) val = maxBudget;
+  
+  budgetSlider.value = val;
+  updateBudgetText(val);
+  updateSliderFill();
+  
+  budgetInput.style.display = 'none';
+  budgetDisplayWrap.style.display = 'inline-flex';
+}
+
+budgetInput.addEventListener('blur', saveManualBudget);
+budgetInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    saveManualBudget();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    budgetInput.style.display = 'none';
+    budgetDisplayWrap.style.display = 'inline-flex';
+  }
+});
+
+// Interactive quick-pick ticks
+document.querySelectorAll('.slider-ticks span').forEach(function(tick) {
+  tick.addEventListener('click', function() {
+    var val = parseInt(tick.dataset.val);
+    if (!isNaN(val)) {
+      budgetSlider.value = val;
+      budgetInput.value = val;
+      updateBudgetText(val);
+      updateSliderFill();
+    }
+  });
+});
+
+document.querySelectorAll('.use-case-card').forEach(function(card) {
+  card.addEventListener('click', function() {
+    document.querySelectorAll('.use-case-card').forEach(function(c){ c.classList.remove('active'); });
+    card.classList.add('active');
+    selectedUseCase = card.dataset.uc;
+    buildBtn.disabled = false;
+    buildBtn.innerHTML = '<span>&#9889;</span> Build My PC for <strong>' + selectedUseCase + '</strong>';
+  });
+});
+
+async function isOnline() {
+  try {
+    await fetch('/api/recommend', { method:'OPTIONS', signal: AbortSignal.timeout(4000) });
+    return true;
+  } catch(e) { return false; }
+}
+
+buildBtn.addEventListener('click', function(){ generateBuild(false); });
+
+async function generateBuild(forceOffline) {
+  var budget = parseInt(budgetSlider.value);
+  var useCase = selectedUseCase;
+
+  buildBtn.disabled = true;
+  errorState.classList.remove('visible');
+  skeletonSection.classList.add('visible');
+  resultsSection.classList.remove('visible');
+  skeletonSection.scrollIntoView({ behavior:'smooth', block:'start' });
+
+  if (forceOffline) {
+    setTimeout(function(){ runOffline(budget, useCase); }, 1500);
+    return;
+  }
+
+  var online = await isOnline();
+  if (!online) {
+    document.getElementById('offlineBanner').classList.add('visible');
+    setTimeout(function(){ runOffline(budget, useCase); }, 1500);
+    return;
+  }
+
+  await runAI(budget, useCase);
+}
+
+async function runAI(budget, useCase) {
+  try {
+    var resp = await fetch('/api/recommend', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ budget: budget, useCase: useCase })
+    });
+    if (!resp.ok) {
+      var errData = {};
+      try { errData = await resp.json(); } catch(e) {}
+      throw new Error(errData.error || ('Server error ' + resp.status));
+    }
+    var build = await resp.json();
+    skeletonSection.classList.remove('visible');
+    renderResults(build, budget, useCase, 'ai');
+    lastBuildData = { build: build, budget: budget, useCase: useCase, source: 'ai' };
+  } catch(err) {
+    console.error('runAI failed:', err);
+    skeletonSection.classList.remove('visible');
+    var msg = err.message || 'Unknown error';
+    document.getElementById('errorDetail').textContent =
+      'AI recommendation failed: ' + msg + '. You can retry, or use our offline database instead.';
+    errorState.classList.add('visible');
+    buildBtn.disabled = false;
+  }
+}
+
+function runOffline(budget, useCase) {
+  var build = getOfflineBuild(budget, useCase);
+  skeletonSection.classList.remove('visible');
+  if (!build) { errorState.classList.add('visible'); buildBtn.disabled = false; return; }
+  renderResults(build, budget, useCase, 'offline');
+  lastBuildData = {build:build, budget:budget, useCase:useCase, source:'offline'};
+}
+
+document.getElementById('retryBtn').addEventListener('click', function(){
+  errorState.classList.remove('visible');
+  generateBuild(false);
+});
+document.getElementById('useOfflineBtn').addEventListener('click', function(){
+  errorState.classList.remove('visible');
+  document.getElementById('offlineBanner').classList.add('visible');
+  generateBuild(true);
+});
+
+function renderResults(build, budget, useCase, source) {
+  var badge = document.getElementById('sourceBadge');
+  if (source === 'ai') { badge.className = 'source-badge ai-live'; badge.textContent = '✶ AI Powered'; }
+  else { badge.className = 'source-badge offline'; badge.textContent = '📦 Offline DB'; }
+
+  document.getElementById('componentsGrid').innerHTML = '';
+  document.getElementById('advancedComponentsGrid').innerHTML = '';
+
+  var mainTypes = ['CPU', 'GPU', 'RAM'];
+  var mainComps = [];
+  var advComps = [];
+
+  build.components.filter(function(c){ return c.price > 0; }).forEach(function(c) {
+    if (mainTypes.indexOf(c.type) !== -1) mainComps.push(c);
+    else advComps.push(c);
+  });
+
+  function renderComponentItem(c) {
+    var q = encodeURIComponent(c.name + ' ' + c.type);
+    var amazonUrl = 'https://www.amazon.in/s?k=' + q;
+    var flipkartUrl = 'https://www.flipkart.com/search?q=' + q;
+    var altHtml = (c.type === 'CPU' && c.altName) ?
+      '<div class="component-alt">Or: ' + c.altName + (c.altSpec ? ' (' + c.altSpec + ')' : '') + '</div>' : '';
+    return '<div class="component-item">' +
+      '<div class="component-type">' + c.type + '</div>' +
+      '<div class="component-name">' + c.name + '</div>' +
+      '<div class="component-spec">' + c.spec + '</div>' +
+      altHtml +
+      '<div class="component-price">\u20B9' + c.price.toLocaleString('en-IN') + '</div>' +
+      '<div class="shop-links">' +
+        '<a class="shop-link amazon" href="' + amazonUrl + '" target="_blank" rel="noopener" aria-label="Search ' + c.name + ' on Amazon India">&#128722; Amazon</a>' +
+        '<a class="shop-link flipkart" href="' + flipkartUrl + '" target="_blank" rel="noopener" aria-label="Search ' + c.name + ' on Flipkart">&#128722; Flipkart</a>' +
+      '</div>' +
+    '</div>';
+  }
+
+  document.getElementById('componentsGrid').innerHTML = mainComps.map(renderComponentItem).join('');
+
+  if (advComps.length > 0) {
+    document.getElementById('advancedComponentsWrap').style.display = 'block';
+    document.getElementById('advancedComponentsGrid').innerHTML = advComps.map(renderComponentItem).join('');
+    document.getElementById('advancedComponentsGrid').style.display = 'none';
+    var toggleBtn = document.getElementById('toggleAdvancedBtn');
+    toggleBtn.innerHTML = '&#9660; Show Advanced Details (Storage, PSU, Motherboard)';
+    
+    // Add event listener safely by replacing the button to clear old listeners
+    var newToggleBtn = toggleBtn.cloneNode(true);
+    toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+    newToggleBtn.addEventListener('click', function() {
+      var grid = document.getElementById('advancedComponentsGrid');
+      if (grid.style.display === 'none') {
+        grid.style.display = 'grid';
+        newToggleBtn.innerHTML = '&#9650; Hide Advanced Details';
+      } else {
+        grid.style.display = 'none';
+        newToggleBtn.innerHTML = '&#9660; Show Advanced Details (Storage, PSU, Motherboard)';
+      }
+    });
+  } else {
+    document.getElementById('advancedComponentsWrap').style.display = 'none';
+  }
+
+  var total = build.components.reduce(function(s,c){ return s+c.price; }, 0);
+  document.getElementById('totalCost').textContent = '\u20B9' + total.toLocaleString('en-IN');
+
+  if (build.upgradePath) {
+    document.getElementById('upgradePathWrap').style.display = 'block';
+    document.getElementById('upgradePathText').textContent = build.upgradePath;
+  } else {
+    document.getElementById('upgradePathWrap').style.display = 'none';
+  }
+
+  var icon = {ok:'&#9989;', warn:'&#9888;&#65039;', fail:'&#10060;'};
+  var ariaLabel = {ok:'Compatible', warn:'Warning', fail:'Incompatible'};
+  document.getElementById('compatList').innerHTML =
+    build.compatibility.map(function(c){
+      return '<div class="compat-item ' + c.status + '" role="listitem">' +
+        '<div class="compat-icon" aria-label="' + (ariaLabel[c.status]||'Info') + '" role="img">' + (icon[c.status]||'&#9989;') + '</div>' +
+        '<div><div class="compat-title">' + c.title + '</div>' +
+        '<div class="compat-detail">' + c.detail + '</div></div></div>';
+    }).join('');
+
+  document.getElementById('osGrid').innerHTML =
+    build.os.map(function(o){
+      return '<div class="os-card' + (o.recommended?' recommended':'') + '">' + (o.recommended?'<div class="rec-badge">&#10003; Recommended</div>':'') + '<div class="os-icon">' + o.icon + '</div><div class="os-name">' + o.name + '</div><div class="os-ram">' + o.ramUsage + '</div><div class="os-reason">' + o.reason + '</div></div>';
+    }).join('');
+
+  var bn = build.bottleneck;
+  document.getElementById('bottleneckSection').innerHTML =
+    '<div class="bottleneck-bar-wrap"><div class="bottleneck-label"><span>CPU Load Balance</span><span>' + bn.cpu_score + '%</span></div><div class="bottleneck-track"><div class="bottleneck-fill" style="width:0%;background:linear-gradient(90deg,#3b82f6,#1d4ed8)" data-target="' + bn.cpu_score + '"></div></div></div>' +
+    '<div class="bottleneck-bar-wrap"><div class="bottleneck-label"><span>GPU Load Balance</span><span>' + bn.gpu_score + '%</span></div><div class="bottleneck-track"><div class="bottleneck-fill" style="width:0%;background:linear-gradient(90deg,#f97316,#c2410c)" data-target="' + bn.gpu_score + '"></div></div></div>' +
+    '<p style="font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6">' + bn.analysis + '</p>';
+  setTimeout(function(){
+    document.querySelectorAll('.bottleneck-fill').forEach(function(el){ el.style.width = el.dataset.target + '%'; });
+  }, 300);
+
+// ── DOUGHNUT BUDGET BREAKDOWN CHART ──────────────────────────────────
+var doughnutColors = ['#3b82f6','#f97316','#22c55e','#a855f7','#eab308','#ef4444'];
+var doughnutData = build.components.filter(function(c){ return c.price > 0; });
+var doughnutCtx = document.getElementById('doughnutChart');
+
+if (window.doughnutChartInstance) {
+  window.doughnutChartInstance.data.labels = doughnutData.map(function(c){ return c.type; });
+  window.doughnutChartInstance.data.datasets[0].data = doughnutData.map(function(c){ return c.price; });
+  window.doughnutChartInstance.data.datasets[0].backgroundColor = doughnutColors.slice(0, doughnutData.length);
+  window.doughnutChartInstance.update();
+} else if (doughnutCtx) {
+  window.doughnutChartInstance = new Chart(doughnutCtx.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: doughnutData.map(function(c){ return c.type; }),
+      datasets:[{
+        data: doughnutData.map(function(c){ return c.price; }),
+        backgroundColor: doughnutColors.slice(0, doughnutData.length),
+        borderColor: '#0f1623',
+        borderWidth: 3,
+        hoverOffset: 8
+      }]
+    },
+    options:{
+      responsive: true, maintainAspectRatio: false,
+      cutout: '68%',
+      plugins:{
+        legend:{ display: false },
+        tooltip:{
+          callbacks:{
+            label: function(ctx){
+              var val = ctx.parsed;
+              var total = ctx.dataset.data.reduce(function(a,b){return a+b;},0);
+              return ' ₹' + val.toLocaleString('en-IN') + ' (' + Math.round(val/total*100) + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Custom legend
+var legendEl = document.getElementById('doughnutLegend');
+var dTotal = doughnutData.reduce(function(s,c){return s+c.price;},0);
+if (legendEl) {
+  legendEl.innerHTML = doughnutData.map(function(c, i){
+    var pct = Math.round(c.price / dTotal * 100);
+    return '<div class="legend-item">' +
+      '<div class="legend-dot" style="background:' + doughnutColors[i] + '"></div>' +
+      '<span class="legend-name">' + c.type + '</span>' +
+      '<span class="legend-pct">' + pct + '%</span>' +
+    '</div>';
+  }).join('');
+}
+
+  var pvpCtx = document.getElementById('pvpChart');
+  if (pvpCtx) {
+    if (pvpChartInstance) {
+      pvpChartInstance.data.labels = build.performance_tiers.map(function(t){ return t.label; });
+      pvpChartInstance.data.datasets[0].data = build.performance_tiers.map(function(t){ return t.performance; });
+      pvpChartInstance.update();
+    } else {
+      pvpChartInstance = new Chart(pvpCtx.getContext('2d'), {
+        type:'bar',
+        data:{
+          labels: build.performance_tiers.map(function(t){ return t.label; }),
+          datasets:[{
+            label:'Performance Score',
+            data: build.performance_tiers.map(function(t){ return t.performance; }),
+            backgroundColor:['rgba(59,130,246,0.5)','rgba(249,115,22,0.85)','rgba(59,130,246,0.3)'],
+            borderColor:['#3b82f6','#f97316','#3b82f6'],
+            borderWidth:2, borderRadius:8
+          }]
+        },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{beginAtZero:true,max:100,ticks:{color:'#64748b',font:{family:'JetBrains Mono'}},grid:{color:'rgba(255,255,255,0.05)'}},
+        x:{ticks:{color:'#64748b',font:{family:'Space Grotesk'}},grid:{display:false}}
+      }
+    }
+      });
+    }
+  }
+
+  document.getElementById('eduGrid').innerHTML =
+    build.edu_cards.map(function(e){
+      return '<div class="edu-card"><div class="edu-header" onclick="toggleEdu(this)"><div class="edu-title">' + e.title + '</div><div class="edu-arrow">&#9660;</div></div><div class="edu-body">' + e.body + '</div></div>';
+    }).join('');
+
+  resultsSection.classList.add('visible');
+  resultsSection.scrollIntoView({behavior:'smooth',block:'start'});
+  buildBtn.disabled = false;
+}
+
+function toggleEdu(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('visible');
+}
+
+document.getElementById('copyBtn').addEventListener('click', function(){
+  if (!lastBuildData) return;
+  var d = lastBuildData;
+  var lines = [
+    'BUILD MY PC - Build Summary',
+    'Budget: Rs.' + d.budget.toLocaleString('en-IN') + ' | Use-case: ' + d.useCase + ' | Source: ' + (d.source==='ai'?'AI Powered':'Offline Database'),
+    '',
+    'COMPONENTS:'
+  ];
+  d.build.components.filter(function(c){ return c.price>0; }).forEach(function(c){
+    lines.push('  ' + c.type + ': ' + c.name + ' (' + c.spec + ') - Rs.' + c.price.toLocaleString('en-IN'));
+  });
+  var total = d.build.components.reduce(function(s,c){ return s+c.price; },0);
+  lines.push('', 'Total: Rs.' + total.toLocaleString('en-IN'), '');
+  var rec = d.build.os.find(function(o){ return o.recommended; });
+  lines.push('OS Recommendation: ' + (rec?rec.name:'Ubuntu 22.04 LTS'), '', 'Generated by Build My PC');
+  navigator.clipboard.writeText(lines.join('\n')).then(function(){
+    var btn = document.getElementById('copyBtn');
+    btn.textContent = '&#10003; Copied!';
+    setTimeout(function(){ btn.textContent = '&#128203; Copy Build Summary'; }, 2000);
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', function(){
+  resultsSection.classList.remove('visible');
+  errorState.classList.remove('visible');
+  document.getElementById('offlineBanner').classList.remove('visible');
+  document.querySelectorAll('.use-case-card').forEach(function(c){ c.classList.remove('active'); });
+  selectedUseCase = null;
+  buildBtn.disabled = true;
+  buildBtn.innerHTML = '<span>&#9889;</span> Select a use-case to generate your build';
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+
+
+// ── PHASE 3: QR CODE ────────────────────────────────────────
+
+// Minimal QR code generator (pure JS, no library needed)
+// Using the export button area — add QR button dynamically
+function addQRButton() {
+  var exportCard = document.querySelector('.results-section .card:last-child');
+  if (!exportCard) return;
+  if (document.getElementById('qrBtn')) return;
+  var btn = document.createElement('button');
+  btn.className = 'export-btn';
+  btn.id = 'qrBtn';
+  btn.innerHTML = '&#128247; Share via QR';
+  btn.addEventListener('click', showQR);
+  exportCard.appendChild(btn);
+}
+
+function showQR() {
+  var url = window.location.href;
+  if (url.startsWith('file://')) url = 'budgetarchitect.netlify.app';
+  document.getElementById('qrUrlText').textContent = url;
+  drawQR(url);
+  document.getElementById('qrOverlay').classList.add('visible');
+}
+
+// Close QR on overlay click
+document.getElementById('qrOverlay').addEventListener('click', function(e){
+  if (e.target === this) this.classList.remove('visible');
+});
+
+// Simple QR drawer using Google Charts API (works offline too via fallback)
+function drawQR(url) {
+  var canvas = document.getElementById('qrCanvas');
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,200,200);
+  // Use an img from Google Charts
+  var img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function(){
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,200,200);
+    ctx.drawImage(img, 0, 0, 200, 200);
+  };
+  img.onerror = function(){
+    // fallback: show text
+    ctx.fillStyle = '#080c14';
+    ctx.fillRect(0,0,200,200);
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('QR needs internet', 100, 90);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px monospace';
+    ctx.fillText('Deploy to Netlify first', 100, 115);
+    ctx.fillText('then scan will work', 100, 132);
+  };
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
+}
+
+// Patch renderResults to add QR button after render
+var _origRenderResults = renderResults;
+renderResults = function(build, budget, useCase, source) {
+  _origRenderResults(build, budget, useCase, source);
+  setTimeout(addQRButton, 100);
+};
+
+</script>
+</body>
+</html>
