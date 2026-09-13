@@ -1083,7 +1083,11 @@ function renderResults(build, budget, useCase, source) {
   var advComps = [];
 
   build.components = Array.isArray(build.components) ? build.components : [];
-  
+  build.compatibility = Array.isArray(build.compatibility) ? build.compatibility : [];
+  build.os = Array.isArray(build.os) ? build.os : [];
+  build.performance_tiers = Array.isArray(build.performance_tiers) ? build.performance_tiers : [];
+  build.edu_cards = Array.isArray(build.edu_cards) ? build.edu_cards : [];
+  build.bottleneck = build.bottleneck || {};
   build.components.filter(function(c){ return c.price > 0; }).forEach(function(c) {
     if (mainTypes.indexOf(c.type) !== -1) mainComps.push(c);
     else advComps.push(c);

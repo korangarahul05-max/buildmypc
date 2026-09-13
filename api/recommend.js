@@ -10,7 +10,60 @@ module.exports = async function handler(req, res) {
 
   try {
     const payload = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    const promptText = payload.prompt || payload.requirements || JSON.stringify(payload);
+    const budget = payload.budget || 0;
+    const useCase = payload.useCase || "General";
+    const promptText = `
+You are a PC building expert. Generate a complete build recommendation in raw JSON format for a budget of ₹${budget} INR designed for ${useCase}.
+Use reasonable indicative Indian prices. Do not pretend to have live component pricing.
+
+The JSON MUST match this exact structure (no markdown, no code blocks):
+{
+  "components": [
+    {
+      "type": "CPU",
+      "name": "Component Name",
+      "spec": "Technical specs",
+      "price": 10000,
+      "altName": "Optional Alternative",
+      "altSpec": "Optional specs"
+    }
+  ],
+  "compatibility": [
+    {
+      "status": "ok",
+      "title": "Short title",
+      "detail": "Detailed explanation"
+    }
+  ],
+  "os": [
+    {
+      "name": "Windows 11",
+      "icon": "&#129695;",
+      "ramUsage": "~4GB idle",
+      "reason": "Why it is recommended",
+      "recommended": true
+    }
+  ],
+  "bottleneck": {
+    "cpu_score": 80,
+    "gpu_score": 50,
+    "analysis": "Explanation"
+  },
+  "performance_tiers": [
+    {
+      "label": "Budget",
+      "performance": 80
+    }
+  ],
+  "edu_cards": [
+    {
+      "title": "Card title",
+      "body": "Explanation"
+    }
+  ],
+  "upgradePath": "Recommended upgrade path"
+}
+`;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
 
