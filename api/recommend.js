@@ -1,3 +1,8 @@
+// In-memory cache scoped to a single serverless instance.
+// Moving to Vercel KV (free tier) is the natural next step if more consistent cache hits are needed later across instances.
+const recommendationCache = new Map();
+const CACHE_TTL_MS = 10800000; // 3 hours
+
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -16,6 +21,17 @@ module.exports = async function handler(req, res) {
     const payload = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const budget = payload.budget || 0;
     const useCase = payload.useCase || "General";
+
+    // Cache lookup
+    const roundedBudget = Math.round(budget / 5000) * 5000;
+    const cacheKey = `${roundedBudget}_${useCase.trim().toLowerCase()}`;
+    const cachedEntry = recommendationCache.get(cacheKey);
+
+    if (cachedEntry && (Date.now() - cachedEntry.timestamp < CACHE_TTL_MS)) {
+      console.log('Cache hit for', cacheKey);
+      return res.status(200).json(cachedEntry.data);
+    }
+
     const promptText = `
 You are a PC building expert. Generate a complete build recommendation in raw JSON format for a budget of ₹${budget} INR designed for ${useCase}.
 Use reasonable indicative Indian prices. Do not pretend to have live component pricing.
@@ -90,6 +106,7 @@ The JSON MUST match this exact structure (no markdown, no code blocks):
       data = await apiResponse.json();
 
       if (apiResponse.ok) {
+        recommendationCache.set(cacheKey, { data, timestamp: Date.now() });
         return res.status(200).json(data);
       }
 
