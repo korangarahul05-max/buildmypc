@@ -66,8 +66,7 @@ The JSON MUST match this exact structure (no markdown, no code blocks):
 `;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
-
-    const apiResponse = await fetch(geminiUrl, {
+    const fetchOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -76,19 +75,33 @@ The JSON MUST match this exact structure (no markdown, no code blocks):
           responseMimeType: "application/json"
         }
       })
-    });
+    };
 
-    const data = await apiResponse.json();
+    const delays = [500, 1500, 3000];
+    let apiResponse;
+    let data;
 
-    if (!apiResponse.ok) {
-      console.error('Gemini Provider Error:', data);
-      return res.status(apiResponse.status).json({
-        error: data.error?.message || 'Upstream Gemini API error',
-        details: data.error || null
-      });
+    for (let attempt = 0; attempt <= delays.length; attempt++) {
+      apiResponse = await fetch(geminiUrl, fetchOptions);
+      data = await apiResponse.json();
+
+      if (apiResponse.ok) {
+        return res.status(200).json(data);
+      }
+
+      const isUnavailable = apiResponse.status === 503 || data.error?.status === 'UNAVAILABLE';
+      
+      if (!isUnavailable || attempt === delays.length) {
+        console.error('Gemini Provider Error:', data);
+        return res.status(apiResponse.status).json({
+          error: data.error?.message || 'Upstream Gemini API error',
+          details: data.error || null
+        });
+      }
+
+      await new Promise(r => setTimeout(r, delays[attempt]));
     }
 
-    return res.status(200).json(data);
   } catch (error) {
     console.error('Serverless Handler Crash:', error);
     return res.status(500).json({ error: error.message || 'Internal Server Error' });
